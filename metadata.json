@@ -1,0 +1,20 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "demrich"
+            }
+        ],
+        "Category": "Online Services",
+        "Description": "Recent movie, TV, and anime downloads from your Sonarr/Radarr stack. Click to see what's landed lately.",
+        "EnabledByDefault": true,
+        "Icon": "folder-video-symbolic",
+        "Id": "dev.demrich.arrdownloads",
+        "License": "MIT",
+        "Name": "Arr Downloads",
+        "Version": "1.0.0",
+        "Website": "https://github.com/demrich/plasma-arr-downloads"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
