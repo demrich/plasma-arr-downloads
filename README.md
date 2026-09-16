@@ -2,8 +2,9 @@
 
 Panel chip for a Sonarr/Radarr-family stack. Shows a count badge in the
 panel; click it to drop down a list of what's finished downloading
-recently, grouped as Movies / TV / Anime, freshest first. Defaults to
-the last 24 hours so it doesn't turn into a wall of history.
+recently, grouped by category (Movies / TV / Anime, or whatever else
+you configure), freshest first. Defaults to the last 24 hours so it
+doesn't turn into a wall of history.
 
 ## Install / update / remove
 
@@ -24,7 +25,15 @@ package. Run it from a separate source checkout instead.
 
 API keys are not stored in the widget config (that would be visible on
 the command line via `/proc` to any process running as you). Instead
-edit `~/.config/arr-downloads/config.json` (already created, `chmod 600`):
+create `~/.config/arr-downloads/config.json` yourself:
+
+```bash
+mkdir -p ~/.config/arr-downloads
+touch ~/.config/arr-downloads/config.json
+chmod 600 ~/.config/arr-downloads/config.json
+```
+
+Then fill it in with your own instances:
 
 ```json
 {
@@ -44,11 +53,17 @@ instances of the same app at different categories.
 Fill in each `api_key` (Settings → General → Security in that
 instance's web UI). An instance with a blank `api_key` is skipped
 silently. Remove ones you don't want tracked entirely, or just leave
-the key blank. `category` controls which section (Movies/TV/Anime) an
-instance's downloads land in. Set it to whatever fits if you add more
-instances (Lidarr, Readarr, etc. would need the fetch script taught
-their response shape first; it only understands Sonarr/Radarr's
-`history/since` payload today).
+the key blank. `category` controls which popup section an instance's
+downloads land in: it's free-form text, not limited to
+movies/tv/anime. `movies`, `tv`, and `anime` get a nicer label and a
+matching emoji; any other value (e.g. `music`) still gets its own
+section, titled from the value you gave it, with a generic icon.
+Sections appear in the order their first instance appears in this
+file, and only show up once they have a download to report. Leaving
+`category` out entirely groups that instance under "Other". (Lidarr,
+Readarr, etc. would need the fetch script taught their response shape
+first; it only understands Sonarr/Radarr's `history/since` payload
+today.)
 
 Poll interval, the time window, and max popup rows are on the widget's
 own config page (right-click → Configure).
@@ -59,5 +74,4 @@ own config page (right-click → Configure).
 instance's `GET /api/v3/history/since` with its API key, keeps only
 `downloadFolderImported` events within the configured window, and
 prints one JSON summary. The QML side shells out to it on a timer via
-Plasma's `executable` DataSource (same pattern as the SABnzbd widget)
-and never touches the API keys itself.
+Plasma's `executable` DataSource and never touches the API keys itself.

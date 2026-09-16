@@ -8,6 +8,7 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 
 CATEGORY_LABELS = {"movies": "Movies", "tv": "TV", "anime": "Anime"}
+DEFAULT_CATEGORY = "other"
 
 
 def load_config(path):
@@ -86,7 +87,7 @@ def parse_record(record, instance, now):
         "title": title,
         "subtitle": subtitle,
         "quality": quality,
-        "category": instance["category"],
+        "category": instance.get("category") or DEFAULT_CATEGORY,
         "instance": instance["name"],
         "date": date.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "ago": ago(date, now),
@@ -146,7 +147,7 @@ def main():
     now = datetime.now(timezone.utc)
     since = now - timedelta(hours=args.hours)
 
-    result = {"ok": True, "configured": False, "items": [], "counts": {}, "errors": []}
+    result = {"ok": True, "configured": False, "items": [], "counts": {}, "categories": [], "errors": []}
 
     try:
         config = load_config(args.config)
@@ -163,6 +164,12 @@ def main():
         return
 
     result["configured"] = True
+    category_order = []
+    for instance in instances:
+        category = instance.get("category") or DEFAULT_CATEGORY
+        if category not in category_order:
+            category_order.append(category)
+
     items = []
     for instance in instances:
         try:
@@ -189,6 +196,10 @@ def main():
 
     result["items"] = items
     result["counts"] = counts
+    result["categories"] = [
+        {"key": key, "label": CATEGORY_LABELS.get(key, key.title()), "count": counts.get(key, 0)}
+        for key in category_order
+    ]
     if result["errors"] and not items:
         result["ok"] = False
         result["error"] = "; ".join(result["errors"])

@@ -7,7 +7,7 @@
             }
         ],
         "Category": "Online Services",
-        "Description": "Recent movie, TV, and anime downloads from your Sonarr/Radarr stack. Click to see what's landed lately.",
+        "Description": "Recent downloads from your Sonarr/Radarr stack, grouped by category. Click to see what's landed lately.",
         "EnabledByDefault": true,
         "Icon": "folder-video-symbolic",
         "Id": "dev.demrich.arrdownloads",

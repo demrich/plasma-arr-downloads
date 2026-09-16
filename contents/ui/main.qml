@@ -11,14 +11,27 @@ PlasmoidItem {
 
     property var items: []
     property var counts: ({})
+    property var categories: []
     property bool configured: false
     property bool fetching: false
     property bool shellReady: false
     property bool snapshotReady: false
     property string statusError: ""
 
+    readonly property var categoryIcons: ({
+        "movies": "🎬",
+        "tv": "📺",
+        "anime": "🍥",
+    })
+    readonly property string defaultCategoryIcon: "📦"
+
     readonly property int itemCount: items.length
-    readonly property int totalCount: (counts.movies || 0) + (counts.tv || 0) + (counts.anime || 0)
+    readonly property int totalCount: {
+        var total = 0;
+        for (var key in counts)
+            total += counts[key];
+        return total;
+    }
     readonly property int hoursWindow: Math.max(1, plasmoid.configuration.hoursWindow || 24)
     readonly property bool inPanel: [
         PlasmaCore.Types.TopEdge,
@@ -29,18 +42,20 @@ PlasmoidItem {
     readonly property int popupWidth: Kirigami.Units.gridUnit * 24
     readonly property int popupHeight: Kirigami.Units.gridUnit * 34
 
-    readonly property var movieItems: items.filter((i) => i.category === "movies")
-    readonly property var tvItems: items.filter((i) => i.category === "tv")
-    readonly property var animeItems: items.filter((i) => i.category === "anime")
+    readonly property var sections: root.categories.map((cat) => ({
+        key: cat.key,
+        label: cat.label,
+        icon: root.categoryIcons[cat.key] || root.defaultCategoryIcon,
+        count: cat.count,
+        items: root.items.filter((i) => i.category === cat.key),
+    })).filter((section) => section.items.length > 0)
 
     readonly property string summaryLine: {
         var bits = [];
-        if (counts.movies)
-            bits.push(i18np("%1 movie", "%1 movies", counts.movies));
-        if (counts.tv)
-            bits.push(i18np("%1 episode", "%1 episodes", counts.tv));
-        if (counts.anime)
-            bits.push(i18np("%1 anime ep", "%1 anime eps", counts.anime));
+        for (var i = 0; i < root.sections.length; i++) {
+            var section = root.sections[i];
+            bits.push(i18n("%1 %2", section.count, section.label));
+        }
         return bits.join("  ·  ");
     }
 
@@ -165,96 +180,48 @@ PlasmoidItem {
                         wrapMode: Text.WordWrap
                     }
 
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: Kirigami.Units.smallSpacing
-                        visible: root.movieItems.length > 0
-
-                        RowLayout {
+                    Repeater {
+                        model: root.sections
+                        delegate: ColumnLayout {
+                            id: sectionDelegate
                             Layout.fillWidth: true
-                            RowLayout {
-                                spacing: Kirigami.Units.smallSpacing / 2
-                                QQC2.Label { text: "🎬" }
-                                Kirigami.Heading { level: 5; text: i18n("Movies") }
-                            }
-                            Item { Layout.fillWidth: true }
-                            QQC2.Label {
-                                text: counts.movies || root.movieItems.length
-                                color: Kirigami.Theme.disabledTextColor
-                                font: Kirigami.Theme.smallFont
-                            }
-                        }
-                        Repeater {
-                            model: root.movieItems
-                            delegate: DownloadRow {
+                            spacing: Kirigami.Units.largeSpacing
+
+                            required property var modelData
+                            required property int index
+                            readonly property var section: modelData
+
+                            Kirigami.Separator {
                                 Layout.fillWidth: true
-                                item: modelData
+                                visible: sectionDelegate.index > 0
                             }
-                        }
-                    }
 
-                    Kirigami.Separator {
-                        Layout.fillWidth: true
-                        visible: root.movieItems.length > 0 && (root.tvItems.length > 0 || root.animeItems.length > 0)
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: Kirigami.Units.smallSpacing
-                        visible: root.tvItems.length > 0
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            RowLayout {
-                                spacing: Kirigami.Units.smallSpacing / 2
-                                QQC2.Label { text: "📺" }
-                                Kirigami.Heading { level: 5; text: i18n("TV") }
-                            }
-                            Item { Layout.fillWidth: true }
-                            QQC2.Label {
-                                text: counts.tv || root.tvItems.length
-                                color: Kirigami.Theme.disabledTextColor
-                                font: Kirigami.Theme.smallFont
-                            }
-                        }
-                        Repeater {
-                            model: root.tvItems
-                            delegate: DownloadRow {
+                            ColumnLayout {
                                 Layout.fillWidth: true
-                                item: modelData
-                            }
-                        }
-                    }
+                                spacing: Kirigami.Units.smallSpacing
 
-                    Kirigami.Separator {
-                        Layout.fillWidth: true
-                        visible: root.tvItems.length > 0 && root.animeItems.length > 0
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: Kirigami.Units.smallSpacing
-                        visible: root.animeItems.length > 0
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            RowLayout {
-                                spacing: Kirigami.Units.smallSpacing / 2
-                                QQC2.Label { text: "🍥" }
-                                Kirigami.Heading { level: 5; text: i18n("Anime") }
-                            }
-                            Item { Layout.fillWidth: true }
-                            QQC2.Label {
-                                text: counts.anime || root.animeItems.length
-                                color: Kirigami.Theme.disabledTextColor
-                                font: Kirigami.Theme.smallFont
-                            }
-                        }
-                        Repeater {
-                            model: root.animeItems
-                            delegate: DownloadRow {
-                                Layout.fillWidth: true
-                                item: modelData
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    RowLayout {
+                                        spacing: Kirigami.Units.smallSpacing / 2
+                                        QQC2.Label { text: sectionDelegate.section.icon }
+                                        Kirigami.Heading { level: 5; text: sectionDelegate.section.label }
+                                    }
+                                    Item { Layout.fillWidth: true }
+                                    QQC2.Label {
+                                        text: sectionDelegate.section.count
+                                        color: Kirigami.Theme.disabledTextColor
+                                        font: Kirigami.Theme.smallFont
+                                    }
+                                }
+                                Repeater {
+                                    model: sectionDelegate.section.items
+                                    delegate: DownloadRow {
+                                        required property var modelData
+                                        Layout.fillWidth: true
+                                        item: modelData
+                                    }
+                                }
                             }
                         }
                     }
@@ -343,6 +310,7 @@ PlasmoidItem {
     function applySnapshot(parsed) {
         items = parsed.items || [];
         counts = parsed.counts || {};
+        categories = parsed.categories || [];
         configured = !!parsed.configured;
         statusError = parsed.ok ? "" : (parsed.error || i18n("Could not read downloads"));
         snapshotReady = true;
