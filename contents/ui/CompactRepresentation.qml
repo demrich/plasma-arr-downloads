@@ -32,8 +32,8 @@ MouseArea {
 
         Kirigami.Icon {
             anchors.verticalCenter: parent.verticalCenter
-            width: 16
-            height: 16
+            width: Kirigami.Units.iconSizes.small
+            height: Kirigami.Units.iconSizes.small
             source: compact.statusError ? "data-warning-symbolic" : "folder-video-symbolic"
             color: compact.fgColor
             isMask: true
@@ -44,7 +44,8 @@ MouseArea {
             visible: compact.count > 0
             text: compact.count
             color: compact.fgColor
-            font.pixelSize: 11
+            font.family: Kirigami.Theme.smallFont.family
+            font.pointSize: Kirigami.Theme.smallFont.pointSize
             font.weight: Font.Medium
         }
     }
