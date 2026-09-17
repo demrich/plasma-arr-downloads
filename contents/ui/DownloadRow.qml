@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
@@ -20,22 +19,11 @@ RowLayout {
 
     spacing: Kirigami.Units.smallSpacing
 
-    ColumnLayout {
+    Kirigami.TitleSubtitle {
         Layout.fillWidth: true
-        spacing: 0
-
-        QQC2.Label {
-            Layout.fillWidth: true
-            text: row.item.title || ""
-            elide: Text.ElideMiddle
-        }
-        QQC2.Label {
-            Layout.fillWidth: true
-            visible: metaText.length > 0
-            text: metaText
-            color: Kirigami.Theme.disabledTextColor
-            font: Kirigami.Theme.smallFont
-            elide: Text.ElideRight
-        }
+        title: row.item.title || ""
+        subtitle: row.metaText
+        subtitleColor: Kirigami.Theme.disabledTextColor
+        elide: Text.ElideMiddle
     }
 }
