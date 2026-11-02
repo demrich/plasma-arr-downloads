@@ -42,6 +42,33 @@ PlasmoidItem {
     ].includes(Plasmoid.location)
     readonly property int popupWidth: Kirigami.Units.gridUnit * 24
     readonly property int popupHeight: Kirigami.Units.gridUnit * 34
+    readonly property bool barWindow: Qt.application.name === "plasmawindowed"
+    readonly property int barWindowCap: Math.max(Kirigami.Units.gridUnit * 12, Screen.height - Kirigami.Units.gridUnit * 4)
+    readonly property int unclampedHeight: (page.implicitHeight > 0 ? page.implicitHeight : popupHeight) + Kirigami.Units.largeSpacing * 2
+    readonly property int barWindowHeight: Math.min(unclampedHeight, barWindowCap)
+    readonly property bool barWindowClamped: unclampedHeight > barWindowCap
+
+    // fullRep's id is not visible here. The representation writes the
+    // real window into barHost.
+    property var barHost: null
+    function fitBarWindow() {
+        if (!barWindow)
+            return
+        const w = barHost
+        if (!w)
+            return
+        const h = barWindowHeight
+        if (w.minimumHeight === h && w.maximumHeight === h && w.height === h)
+            return
+        // Raise the cap before the floor. Qt drops a minimum that is
+        // above the current maximum.
+        w.maximumHeight = Math.max(w.maximumHeight, h)
+        w.minimumHeight = h
+        w.maximumHeight = h
+        w.height = h
+    }
+
+    onBarWindowHeightChanged: Qt.callLater(fitBarWindow)
 
     readonly property var sections: root.categories.map((cat) => ({
         key: cat.key,
@@ -87,6 +114,7 @@ PlasmoidItem {
 
     Layout.fillWidth: false
     Layout.fillHeight: inPanel
+    Layout.minimumHeight: barWindow ? barWindowHeight : 0
 
     toolTipMainText: Plasmoid.title
     toolTipSubText: {
@@ -115,16 +143,27 @@ PlasmoidItem {
             }
         }
 
+        property var hostWindow: Window.window
+        onHostWindowChanged: {
+            root.barHost = hostWindow
+            Qt.callLater(root.fitBarWindow)
+        }
+        Component.onCompleted: {
+            root.barHost = Window.window
+            Qt.callLater(root.fitBarWindow)
+        }
+
         implicitWidth: root.popupWidth
-        implicitHeight: root.popupHeight
+        implicitHeight: root.barWindow ? root.barWindowHeight : root.popupHeight
         Layout.minimumWidth: Kirigami.Units.gridUnit * 18
         Layout.preferredWidth: root.popupWidth
         Layout.maximumWidth: Kirigami.Units.gridUnit * 40
         Layout.minimumHeight: Kirigami.Units.gridUnit * 14
-        Layout.preferredHeight: root.popupHeight
-        Layout.maximumHeight: Kirigami.Units.gridUnit * 50
+        Layout.preferredHeight: root.barWindow ? root.barWindowHeight : root.popupHeight
+        Layout.maximumHeight: root.barWindow ? root.barWindowHeight : Kirigami.Units.gridUnit * 50
 
         ColumnLayout {
+            id: page
             anchors.fill: parent
             anchors.margins: Kirigami.Units.largeSpacing
             spacing: Kirigami.Units.smallSpacing
@@ -175,14 +214,17 @@ PlasmoidItem {
             QQC2.ScrollView {
                 id: scroller
                 Layout.fillWidth: true
-                Layout.fillHeight: true
-                clip: true
+                Layout.fillHeight: root.barWindowClamped
+                Layout.preferredHeight: listColumn.implicitHeight
+                clip: root.barWindowClamped
                 contentWidth: availableWidth
-                QQC2.ScrollBar.vertical.policy: QQC2.ScrollBar.AlwaysOff
+                QQC2.ScrollBar.vertical.policy: (root.barWindow && root.barWindowClamped)
+                                                ? QQC2.ScrollBar.AsNeeded
+                                                : QQC2.ScrollBar.AlwaysOff
                 QQC2.ScrollBar.horizontal.policy: QQC2.ScrollBar.AlwaysOff
 
                 ColumnLayout {
-                    id: column
+                    id: listColumn
                     width: scroller.availableWidth
                     spacing: Kirigami.Units.largeSpacing
 
