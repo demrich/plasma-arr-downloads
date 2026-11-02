@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
+import QtQuick.Window
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasma5support as Plasma5Support
@@ -99,6 +100,21 @@ PlasmoidItem {
     }
 
     fullRepresentation: Item {
+        id: fullRep
+
+        // The bar starts this with --statusnotifier, so closing the window
+        // leaves the process in the tray. A panel popup is not this process.
+        Shortcut {
+            sequence: "Escape"
+            context: Qt.ApplicationShortcut
+            enabled: Qt.application.name === "plasmawindowed"
+            onActivated: {
+                const w = fullRep.Window.window
+                if (w)
+                    w.close()
+            }
+        }
+
         implicitWidth: root.popupWidth
         implicitHeight: root.popupHeight
         Layout.minimumWidth: Kirigami.Units.gridUnit * 18
