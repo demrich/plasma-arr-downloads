@@ -44,7 +44,8 @@ PlasmoidItem {
     readonly property int popupHeight: Kirigami.Units.gridUnit * 34
     readonly property bool barWindow: Qt.application.name === "plasmawindowed"
     readonly property int barWindowCap: Math.max(Kirigami.Units.gridUnit * 12, Screen.height - Kirigami.Units.gridUnit * 4)
-    readonly property int unclampedHeight: (page.implicitHeight > 0 ? page.implicitHeight : popupHeight) + Kirigami.Units.largeSpacing * 2
+    property real contentImplicitHeight: 0
+    readonly property int unclampedHeight: (contentImplicitHeight > 0 ? contentImplicitHeight : popupHeight) + Kirigami.Units.largeSpacing * 2
     readonly property int barWindowHeight: Math.min(unclampedHeight, barWindowCap)
     readonly property bool barWindowClamped: unclampedHeight > barWindowCap
 
@@ -158,12 +159,17 @@ PlasmoidItem {
         Layout.minimumWidth: Kirigami.Units.gridUnit * 18
         Layout.preferredWidth: root.popupWidth
         Layout.maximumWidth: Kirigami.Units.gridUnit * 40
-        Layout.minimumHeight: Kirigami.Units.gridUnit * 14
+        Layout.minimumHeight: root.barWindow ? root.barWindowHeight : Kirigami.Units.gridUnit * 14
         Layout.preferredHeight: root.barWindow ? root.barWindowHeight : root.popupHeight
         Layout.maximumHeight: root.barWindow ? root.barWindowHeight : Kirigami.Units.gridUnit * 50
 
         ColumnLayout {
             id: page
+            function reportContentHeight() {
+                root.contentImplicitHeight = page.implicitHeight
+            }
+            onImplicitHeightChanged: Qt.callLater(reportContentHeight)
+            Component.onCompleted: Qt.callLater(reportContentHeight)
             anchors.fill: parent
             anchors.margins: Kirigami.Units.largeSpacing
             spacing: Kirigami.Units.smallSpacing
