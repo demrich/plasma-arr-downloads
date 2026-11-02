@@ -10,6 +10,23 @@ import org.kde.plasma.plasmoid
 PlasmoidItem {
     id: root
 
+    // plasmawindowed backs the applet with an opaque Rectangle of its own.
+    // In the bar's popup, tint that one to match the bar's islands (Island.qml).
+    readonly property var popupHost: Qt.application.arguments.indexOf("--statusnotifier") !== -1 ? Window.window : null
+    readonly property Item popupBackdrop: popupHost
+        ? (Array.from(popupHost.contentItem.children).find(item => item.hasOwnProperty("appletInterface")) ?? null)
+        : null
+    onPopupHostChanged: {
+        if (popupHost)
+            popupHost.color = "transparent"
+    }
+    Binding {
+        target: root.popupBackdrop
+        when: root.popupBackdrop !== null
+        property: "color"
+        value: Qt.alpha(Kirigami.Theme.backgroundColor, 0.9)
+    }
+
     property var items: []
     property var counts: ({})
     property var categories: []
